@@ -9,9 +9,9 @@ interface TabNavigationProps {
 
 const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabChange }) => {
   const tabs = [
-    { id: 'map' as TabType, label: '🗺️ Buscar en Mapa', icon: '🗺️' },
-    { id: 'recipes' as TabType, label: '👨‍🍳 Recetas Tradicionales', icon: '👨‍🍳' },
-    { id: 'events' as TabType, label: '🎉 Eventos y Fiestas', icon: '🎉' }
+    { id: 'map' as TabType, label: 'Buscar en Mapa', icon: '🗺️' },
+    { id: 'recipes' as TabType, label: 'Recetas Tradicionales', icon: '👨‍🍳' },
+    { id: 'events' as TabType, label: 'Eventos y Fiestas', icon: '🎉' }
   ];
 
   return (
