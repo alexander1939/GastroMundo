@@ -43,7 +43,6 @@ const RecipesTab: React.FC = () => {
 
   // Cargar recetas iniciales solo UNA vez cuando se monta el componente
   useEffect(() => {
-    console.log('🚀 Montando RecipesTab - Cargando recetas iniciales');
     loadInitialRecipes();
   }, []); // Solo se ejecuta una vez al montar
 

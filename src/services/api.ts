@@ -33,8 +33,6 @@ const getCoordinates = async (city: string): Promise<{lat: number, lng: number, 
     
     // Si no encuentra la ciudad exacta, buscar en un radio más amplio
     if (!geocodeData || geocodeData.length === 0) {
-      console.log('🔍 Ciudad no encontrada, buscando en área más amplia...');
-      
       // Buscar solo el nombre principal sin estado
       const cityName = city.split(',')[0].trim();
       geocodeResponse = await fetch(
@@ -48,7 +46,6 @@ const getCoordinates = async (city: string): Promise<{lat: number, lng: number, 
     
     // Si aún no encuentra, buscar en el estado
     if (!geocodeData || geocodeData.length === 0) {
-      console.log('🔍 Buscando en el estado...');
       const stateMatch = city.match(/(chiapas|oaxaca|veracruz|puebla|guerrero|michoacan|jalisco|sonora|sinaloa|nayarit|colima|durango|zacatecas|aguascalientes|san luis potosi|queretaro|hidalgo|tlaxcala|morelos|mexico|cdmx|df|nuevo leon|tamaulipas|coahuila|chihuahua|baja california|baja california sur|yucatan|quintana roo|campeche|tabasco)/i);
       
       if (stateMatch) {
@@ -128,8 +125,6 @@ const searchRestaurantsWithStrategy = async (lat: number, lng: number, strategy:
 
 export const searchMexicanRestaurants = async (city: string): Promise<Restaurant[]> => {
   try {
-    console.log('🔍 Buscando restaurantes mexicanos en:', city);
-    
     // Obtener coordenadas con búsqueda flexible
     const coords = await getCoordinates(city);
     
@@ -137,22 +132,17 @@ export const searchMexicanRestaurants = async (city: string): Promise<Restaurant
       throw new Error('No se pudo encontrar la ubicación especificada');
     }
     
-    console.log('📍 Coordenadas obtenidas:', coords);
-    
     // Estrategia 1: Búsqueda exacta en la ciudad
-    console.log('🌐 Estrategia 1: Búsqueda exacta...');
     let restaurants = await searchRestaurantsWithStrategy(coords.lat, coords.lng, 'exact');
     let mexicanRestaurants = filterMexicanRestaurants(restaurants);
     
     // Si no hay suficientes resultados, usar estrategia más amplia
     if (mexicanRestaurants.length < 3) {
-      console.log('🌐 Estrategia 2: Búsqueda más amplia...');
       restaurants = await searchRestaurantsWithStrategy(coords.lat, coords.lng, 'broad');
       mexicanRestaurants = filterMexicanRestaurants(restaurants);
       
       // Si aún no hay suficientes, buscar en todo el estado
       if (mexicanRestaurants.length < 3) {
-        console.log('🌐 Estrategia 3: Búsqueda en todo el estado...');
         restaurants = await searchRestaurantsWithStrategy(coords.lat, coords.lng, 'state');
         mexicanRestaurants = filterMexicanRestaurants(restaurants);
       }
@@ -160,11 +150,9 @@ export const searchMexicanRestaurants = async (city: string): Promise<Restaurant
     
     // Si no hay restaurantes mexicanos específicos, incluir restaurantes generales
     if (mexicanRestaurants.length === 0) {
-      console.log('🍽️ No se encontraron restaurantes mexicanos específicos, incluyendo restaurantes generales...');
       mexicanRestaurants = filterGeneralRestaurants(restaurants);
     }
     
-    console.log('🎉 Total de restaurantes encontrados:', mexicanRestaurants.length);
     return mexicanRestaurants;
     
   } catch (error) {
@@ -235,7 +223,6 @@ const filterMexicanRestaurants = (elements: any[]): Restaurant[] => {
           element.tags.cuisine === 'mexican';
         
         if (isMexican) {
-          console.log('✅ Restaurante mexicano encontrado:', element.tags.name);
           mexicanRestaurants.push({
             id: element.id.toString(),
             name: element.tags.name || 'Restaurante Mexicano',
@@ -267,7 +254,6 @@ const filterGeneralRestaurants = (elements: any[]): Restaurant[] => {
       
       const name = element.tags.name;
       if (name && name.trim() !== '') {
-        console.log('🍽️ Restaurante general encontrado:', name);
         restaurants.push({
           id: element.id.toString(),
           name: name,

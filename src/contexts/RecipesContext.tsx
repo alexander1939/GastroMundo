@@ -60,11 +60,8 @@ export const RecipesProvider: React.FC<RecipesProviderProps> = ({ children }) =>
   const loadInitialRecipes = useCallback(async () => {
     // Solo cargar si no se ha inicializado antes
     if (isInitialized && recipeCards.length > 0) {
-      console.log('🔄 Manteniendo estado persistente - ya hay recetas cargadas');
       return;
     }
-
-    console.log('🔄 Cargando recetas iniciales por primera vez');
     setLoading(true);
     setError(null);
     setHasMore(true);
@@ -107,7 +104,6 @@ export const RecipesProvider: React.FC<RecipesProviderProps> = ({ children }) =>
   }, [loadingMore, hasMore, currentQuery, recipeCards.length]);
 
   const handleCategoryChange = useCallback(async (category: string) => {
-    console.log('🔄 Cambiando categoría de', selectedCategory, 'a', category);
     
     // Limpiar completamente el estado
     setSelectedCategory(category);
@@ -142,8 +138,6 @@ export const RecipesProvider: React.FC<RecipesProviderProps> = ({ children }) =>
 
   const handleSearch = useCallback(async () => {
     if (!searchQuery.trim()) return;
-    
-    console.log('🔍 Iniciando búsqueda para:', searchQuery);
     
     // Limpiar completamente el estado
     setLoading(true);

@@ -42,8 +42,6 @@ const Map: React.FC<MapProps> = ({ city, onRestaurantsFound }) => {
     setError(null);
     
     try {
-      console.log('🚀 Iniciando búsqueda en API real para:', searchCity);
-      
       // Primero obtener las coordenadas de la ciudad para centrar el mapa
       const geocodeResponse = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchCity)}&format=json&limit=1`
@@ -54,7 +52,6 @@ const Map: React.FC<MapProps> = ({ city, onRestaurantsFound }) => {
         if (geocodeData && geocodeData.length > 0) {
           const lat = parseFloat(geocodeData[0].lat);
           const lng = parseFloat(geocodeData[0].lon);
-          console.log('📍 Centrando mapa en:', lat, lng);
           setMapCenter([lat, lng]);
         }
       }
@@ -63,11 +60,9 @@ const Map: React.FC<MapProps> = ({ city, onRestaurantsFound }) => {
       const apiRestaurants = await searchMexicanRestaurants(searchCity);
       
       if (apiRestaurants.length > 0) {
-        console.log('✅ API exitosa, restaurantes encontrados:', apiRestaurants.length);
         setRestaurants(apiRestaurants);
         onRestaurantsFound(apiRestaurants);
       } else {
-        console.log('⚠️ No se encontraron restaurantes mexicanos en la API');
         setError('No se encontraron restaurantes mexicanos en esta ciudad. Intenta con otra ciudad.');
         setRestaurants([]);
         onRestaurantsFound([]);

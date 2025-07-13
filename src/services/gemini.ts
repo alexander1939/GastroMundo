@@ -1,6 +1,6 @@
 // Servicio para integrar con Gemini API para recetas tradicionales mexicanas
 
-const GEMINI_API_KEY = 'AIzaSyCRJ1bFFMyI_xGtfuVuZKS91r7RmXrHv5Y';
+const GEMINI_API_KEY = 'AIzaSyBcdZ3psIszYZu0d-8COxah1BYoqZNVzu0';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
 export interface Recipe {
@@ -187,30 +187,14 @@ const validateRecipeSpecificity = (recipeCards: RecipeCard[], query: string): Re
   // Extraer el término de búsqueda principal
   const searchTerm = query.toLowerCase().replace(/\s+mexicanos\s+tradicionales\s+específicos?/gi, '').trim();
   
-  console.log('🔍 Validando especificidad para:', searchTerm);
-  
   const validRecipes = recipeCards.filter(recipe => {
     const recipeName = recipe.name.toLowerCase();
     
     // REGLA ESTRICTA: El nombre DEBE contener el término de búsqueda
     const isSpecific = recipeName.includes(searchTerm);
     
-    if (!isSpecific) {
-      console.log('❌ RECETA RECHAZADA - No contiene "' + searchTerm + '":', recipe.name);
-    } else {
-      console.log('✅ Receta válida:', recipe.name);
-    }
-    
     return isSpecific;
   });
-  
-  console.log(`✅ ${validRecipes.length} de ${recipeCards.length} recetas pasaron la validación estricta`);
-  
-  // Si menos del 100% de las recetas son específicas, mostrar error crítico
-  if (validRecipes.length < recipeCards.length) {
-    console.error(`🚨 ERROR CRÍTICO: Solo ${validRecipes.length} de ${recipeCards.length} recetas son específicas a "${searchTerm}"`);
-    console.error('🚨 La API no está respetando las instrucciones específicas!');
-  }
   
   return validRecipes;
 };
@@ -218,7 +202,6 @@ const validateRecipeSpecificity = (recipeCards: RecipeCard[], query: string): Re
 // Función para obtener recetas básicas (solo para tarjetas)
 export const getRecipeCards = async (query: string, offset: number = 0): Promise<RecipeCard[]> => {
   try {
-    console.log('🤖 Obteniendo tarjetas de recetas para:', query, 'offset:', offset);
     
     const prompt = `
       Eres un experto chef mexicano especializado en recetas tradicionales. 
@@ -279,14 +262,12 @@ export const getRecipeCards = async (query: string, offset: number = 0): Promise
     }
 
     const data = await response.json();
-    console.log('🤖 Respuesta cruda de Gemini (tarjetas):', data);
 
     if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
       throw new Error('Respuesta inválida de Gemini API');
     }
 
     const responseText = data.candidates[0].content.parts[0].text;
-    console.log('📝 Texto de respuesta (tarjetas):', responseText);
 
     // Extraer JSON de la respuesta
     const jsonMatch = responseText.match(/\[[\s\S]*\]/);
@@ -337,16 +318,11 @@ export const getRecipeCards = async (query: string, offset: number = 0): Promise
       image: getRecipeImage(card.name, card.category)
     }));
 
-    console.log('✅ Tarjetas de recetas generadas:', recipeCards.length);
-    
     // Validar que las recetas sean específicas a la búsqueda
     const validatedCards = validateRecipeSpecificity(recipeCards, query);
     
-    console.log('✅ Recetas validadas:', validatedCards.length);
-    
     // Si menos del 90% son específicas, regenerar con un prompt más agresivo
     if (validatedCards.length < recipeCards.length * 0.9) {
-      console.log('⚠️ DEMASIADAS RECETAS NO ESPECÍFICAS! Regenerando con prompt más agresivo...');
       
       const aggressivePrompt = `
         Eres un chef mexicano. SOLO genera recetas de "${query}". NADA MÁS.
@@ -402,7 +378,6 @@ export const getRecipeCards = async (query: string, offset: number = 0): Promise
           }));
           
           const aggressiveValidated = validateRecipeSpecificity(aggressiveRecipeCards, query);
-          console.log('✅ Recetas regeneradas y validadas:', aggressiveValidated.length);
           return aggressiveValidated;
         }
       }
@@ -419,7 +394,6 @@ export const getRecipeCards = async (query: string, offset: number = 0): Promise
 // Función para cargar más recetas (para infinite scroll)
 export const loadMoreRecipes = async (query: string, currentCount: number): Promise<RecipeCard[]> => {
   // El query ya viene limpio del contexto, usarlo directamente
-  console.log('🔄 Cargando más recetas para:', query, 'offset:', currentCount);
   
   // Agregar contexto adicional al prompt para mantener especificidad
   const result = await getRecipeCards(query, currentCount);
@@ -432,11 +406,8 @@ export const loadMoreRecipes = async (query: string, currentCount: number): Prom
     return recipeName.includes(searchTerm) || recipeDescription.includes(searchTerm);
   });
   
-  console.log(`🔍 Validación: ${specificRecipes.length} de ${result.length} recetas son específicas`);
-  
   // Si menos del 80% son específicas, intentar de nuevo con un prompt más específico
   if (specificRecipes.length < result.length * 0.8) {
-    console.log('⚠️ Demasiadas recetas no específicas, regenerando...');
     return await getRecipeCards(`${query} - SOLO ${query}`, currentCount);
   }
   
@@ -446,7 +417,6 @@ export const loadMoreRecipes = async (query: string, currentCount: number): Prom
 // Función para obtener detalles completos de una receta específica
 export const getRecipeDetails = async (recipeName: string, category: string): Promise<Recipe> => {
   try {
-    console.log('🤖 Obteniendo detalles completos para:', recipeName);
     
     const prompt = `
       Eres un experto chef mexicano especializado en recetas tradicionales. 
@@ -489,14 +459,12 @@ export const getRecipeDetails = async (recipeName: string, category: string): Pr
     }
 
     const data = await response.json();
-    console.log('🤖 Respuesta cruda de Gemini (detalles):', data);
 
     if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
       throw new Error('Respuesta inválida de Gemini API');
     }
 
     const responseText = data.candidates[0].content.parts[0].text;
-    console.log('📝 Texto de respuesta (detalles):', responseText);
 
     // Extraer JSON de la respuesta (buscar objeto individual)
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
@@ -523,7 +491,6 @@ export const getRecipeDetails = async (recipeName: string, category: string): Pr
       image: getRecipeImage(recipeData.name, recipeData.category)
     };
 
-    console.log('✅ Detalles de receta generados:', recipe.name);
     return recipe;
 
   } catch (error) {
