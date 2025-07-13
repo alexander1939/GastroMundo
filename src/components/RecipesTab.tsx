@@ -1,161 +1,79 @@
-import React, { useState } from 'react';
-
-interface Recipe {
-  id: string;
-  name: string;
-  description: string;
-  ingredients: string[];
-  instructions: string[];
-  difficulty: 'Fácil' | 'Medio' | 'Difícil';
-  time: string;
-  servings: number;
-  image?: string;
-  category: string;
-}
-
-const mockRecipes: Recipe[] = [
-  {
-    id: '1',
-    name: 'Tacos al Pastor',
-    description: 'Tacos de cerdo marinado con piña y especias, servidos con cilantro y cebolla',
-    ingredients: [
-      '1 kg de carne de cerdo',
-      'Piña fresca',
-      'Chiles guajillo',
-      'Achiote',
-      'Orégano',
-      'Tortillas de maíz',
-      'Cilantro',
-      'Cebolla',
-      'Limón'
-    ],
-    instructions: [
-      'Marinar la carne con achiote, chiles y especias',
-      'Cocinar en trompo o plancha',
-      'Cortar la carne en tiras finas',
-      'Calentar las tortillas',
-      'Servir con piña, cilantro y cebolla'
-    ],
-    difficulty: 'Medio',
-    time: '2 horas',
-    servings: 6,
-    category: 'Tacos'
-  },
-  {
-    id: '2',
-    name: 'Mole Poblano',
-    description: 'Salsa tradicional de Puebla con chocolate y especias',
-    ingredients: [
-      'Chiles mulato, ancho y pasilla',
-      'Chocolate amargo',
-      'Ajonjolí',
-      'Cacahuates',
-      'Pollo',
-      'Tortillas',
-      'Especias variadas'
-    ],
-    instructions: [
-      'Tostar los chiles y especias',
-      'Preparar la pasta de mole',
-      'Cocinar el pollo',
-      'Mezclar todo y cocinar',
-      'Servir con arroz y tortillas'
-    ],
-    difficulty: 'Difícil',
-    time: '4 horas',
-    servings: 8,
-    category: 'Platos Principales'
-  },
-  {
-    id: '3',
-    name: 'Guacamole Tradicional',
-    description: 'Guacamole fresco con ingredientes básicos',
-    ingredients: [
-      'Aguacates maduros',
-      'Tomate',
-      'Cebolla',
-      'Cilantro',
-      'Limón',
-      'Sal'
-    ],
-    instructions: [
-      'Moler los aguacates',
-      'Picar finamente los vegetales',
-      'Mezclar todos los ingredientes',
-      'Ajustar sal y limón al gusto'
-    ],
-    difficulty: 'Fácil',
-    time: '15 minutos',
-    servings: 4,
-    category: 'Aperitivos'
-  },
-  {
-    id: '4',
-    name: 'Pozole Rojo',
-    description: 'Sopa tradicional con maíz y carne de cerdo',
-    ingredients: [
-      'Maíz pozolero',
-      'Carne de cerdo',
-      'Chiles rojos',
-      'Lechuga',
-      'Rábanos',
-      'Orégano',
-      'Limón'
-    ],
-    instructions: [
-      'Cocinar el maíz hasta que reviente',
-      'Cocinar la carne de cerdo',
-      'Preparar la salsa roja',
-      'Mezclar todo y cocinar',
-      'Servir con guarniciones'
-    ],
-    difficulty: 'Medio',
-    time: '3 horas',
-    servings: 10,
-    category: 'Sopas'
-  },
-  {
-    id: '5',
-    name: 'Chiles en Nogada',
-    description: 'Chiles poblanos rellenos con nogada y granada',
-    ingredients: [
-      'Chiles poblanos',
-      'Carne molida',
-      'Nueces',
-      'Granada',
-      'Crema',
-      'Queso fresco',
-      'Hierbas de olor'
-    ],
-    instructions: [
-      'Asar y pelar los chiles',
-      'Preparar el relleno',
-      'Rellenar los chiles',
-      'Preparar la nogada',
-      'Servir con granada'
-    ],
-    difficulty: 'Difícil',
-    time: '2.5 horas',
-    servings: 6,
-    category: 'Platos Principales'
-  }
-];
+import React, { useEffect, useRef } from 'react';
+import { useRecipes } from '../contexts/RecipesContext';
 
 const RecipesTab: React.FC = () => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const {
+    recipeCards,
+    selectedRecipe,
+    selectedCategory,
+    searchQuery,
+    hasMore,
+    loading,
+    loadingMore,
+    loadingDetails,
+    error,
+    loadInitialRecipes,
+    handleCategoryChange,
+    handleSearch,
+    handleLoadMore,
+    handleRecipeClick,
+    setSearchQuery,
+    clearSelectedRecipe,
+    clearError
+  } = useRecipes();
 
-  const categories = ['Todas', ...Array.from(new Set(mockRecipes.map(r => r.category)))];
-  
-  const filteredRecipes = selectedCategory === 'Todas' 
-    ? mockRecipes 
-    : mockRecipes.filter(recipe => recipe.category === selectedCategory);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadingRef = useRef<HTMLDivElement>(null);
+
+  const categories = [
+    'Todas', 
+    'Chiapas', 
+    'Oaxaca', 
+    'Puebla', 
+    'Yucatán', 
+    'Antojitos', 
+    'Sopas', 
+    'Postres', 
+    'Bebidas',
+    'Tamales',
+    'Mole',
+    'Pozole',
+    'Tacos'
+  ];
+
+  // Cargar recetas iniciales solo UNA vez cuando se monta el componente
+  useEffect(() => {
+    console.log('🚀 Montando RecipesTab - Cargando recetas iniciales');
+    loadInitialRecipes();
+  }, []); // Solo se ejecuta una vez al montar
+
+  // Configurar intersection observer para infinite scroll
+  useEffect(() => {
+    if (loadingRef.current) {
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+            handleLoadMore();
+          }
+        },
+        { threshold: 0.1 }
+      );
+
+      observerRef.current.observe(loadingRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [hasMore, loadingMore, loading, handleLoadMore]);
 
   const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'Fácil': return '#4CAF50';
-      case 'Medio': return '#FF9800';
-      case 'Difícil': return '#F44336';
+    switch (difficulty.toLowerCase()) {
+      case 'fácil': return '#4CAF50';
+      case 'intermedio': return '#FF9800';
+      case 'difícil': return '#F44336';
       default: return '#666';
     }
   };
@@ -164,7 +82,28 @@ const RecipesTab: React.FC = () => {
     <div className="recipes-tab">
       <div className="recipes-header">
         <h2>👨‍🍳 Recetas Tradicionales Mexicanas</h2>
-        <p>Descubre los secretos de la cocina mexicana tradicional</p>
+        <p>Descubre los secretos de la cocina mexicana tradicional con IA</p>
+      </div>
+
+      {/* Barra de búsqueda */}
+      <div className="search-section">
+        <div className="search-form">
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Buscar recetas... (ej: tamales de Chiapas, mole poblano)"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          />
+          <button 
+            className="search-button"
+            onClick={handleSearch}
+            disabled={loading}
+          >
+            {loading ? '🔍 Buscando...' : '🔍 Buscar'}
+          </button>
+        </div>
       </div>
 
       <div className="category-filter">
@@ -172,85 +111,166 @@ const RecipesTab: React.FC = () => {
           <button
             key={category}
             className={`category-button ${selectedCategory === category ? 'active' : ''}`}
-            onClick={() => setSelectedCategory(category)}
+            onClick={() => handleCategoryChange(category)}
+            disabled={loading}
           >
             {category}
           </button>
         ))}
       </div>
 
+      {/* Mensaje de error */}
+      {error && (
+        <div className="error-message">
+          <p>❌ {error}</p>
+          <button onClick={loadInitialRecipes}>🔄 Reintentar</button>
+        </div>
+      )}
+
+      {/* Loading inicial */}
+      {loading && (
+        <div className="loading-container">
+          <div className="loading">
+            <div className="spinner"></div>
+            <p>🤖 Generando recetas con IA...</p>
+          </div>
+        </div>
+      )}
+
       <div className="recipes-content">
         <div className="recipes-grid">
-          {filteredRecipes.map(recipe => (
+          {recipeCards.map(recipeCard => (
             <div 
-              key={recipe.id} 
+              key={recipeCard.id} 
               className="recipe-card"
-              onClick={() => setSelectedRecipe(recipe)}
+              onClick={() => handleRecipeClick(recipeCard)}
             >
+              {recipeCard.image && (
+                <div className="recipe-image">
+                  <img src={recipeCard.image} alt={recipeCard.name} />
+                </div>
+              )}
               <div className="recipe-header">
-                <h3>{recipe.name}</h3>
+                <h3>{recipeCard.name}</h3>
                 <span 
                   className="difficulty-badge"
-                  style={{ backgroundColor: getDifficultyColor(recipe.difficulty) }}
+                  style={{ backgroundColor: getDifficultyColor(recipeCard.difficulty) }}
                 >
-                  {recipe.difficulty}
+                  {recipeCard.difficulty}
                 </span>
               </div>
-              <p className="recipe-description">{recipe.description}</p>
+              <p className="recipe-description">{recipeCard.description}</p>
               <div className="recipe-meta">
-                <span>⏱️ {recipe.time}</span>
-                <span>👥 {recipe.servings} personas</span>
-                <span>🏷️ {recipe.category}</span>
+                <span>⏱️ {recipeCard.cookingTime}</span>
+                <span>👥 {recipeCard.servings}</span>
+                <span>🏷️ {recipeCard.category}</span>
+                {recipeCard.region && <span>📍 {recipeCard.region}</span>}
               </div>
             </div>
           ))}
         </div>
 
-        {selectedRecipe && (
+        {/* Loading para más recetas (infinite scroll) */}
+        {!loading && hasMore && (
+          <div ref={loadingRef} className="loading-more-container">
+            {loadingMore && (
+              <div className="loading-more">
+                <div className="spinner"></div>
+                <p>🤖 Cargando más recetas...</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Mensaje cuando no hay más recetas */}
+        {!loading && !hasMore && recipeCards.length > 0 && (
+          <div className="no-more-recipes">
+            <p>🎉 ¡Has visto todas las recetas disponibles!</p>
+          </div>
+        )}
+
+        {(selectedRecipe || loadingDetails) && (
           <div className="recipe-modal">
             <div className="recipe-modal-content">
               <button 
                 className="close-button"
-                onClick={() => setSelectedRecipe(null)}
+                onClick={clearSelectedRecipe}
               >
                 ✕
               </button>
               
-              <h2>{selectedRecipe.name}</h2>
-              <p className="recipe-description">{selectedRecipe.description}</p>
+              {loadingDetails && (
+                <div className="loading-details-full">
+                  <div className="loading-animation">
+                    <div className="chef-hat">👨‍🍳</div>
+                    <div className="spinner-large"></div>
+                  </div>
+                  <h2>🤖 Generando receta completa...</h2>
+                  <p>Estamos preparando todos los ingredientes y pasos para ti</p>
+                  <div className="loading-steps">
+                    <div className="step">📝 Escribiendo instrucciones detalladas...</div>
+                    <div className="step">🥕 Listando ingredientes exactos...</div>
+                    <div className="step">💡 Agregando consejos de cocina...</div>
+                    <div className="step">📚 Incluyendo historia cultural...</div>
+                  </div>
+                </div>
+              )}
               
-              <div className="recipe-details">
-                <div className="recipe-info">
-                  <span>⏱️ {selectedRecipe.time}</span>
-                  <span>👥 {selectedRecipe.servings} personas</span>
-                  <span 
-                    className="difficulty-badge"
-                    style={{ backgroundColor: getDifficultyColor(selectedRecipe.difficulty) }}
-                  >
-                    {selectedRecipe.difficulty}
-                  </span>
-                </div>
-              </div>
+              {!loadingDetails && selectedRecipe && (
+                <>
+                  <h2>{selectedRecipe.name}</h2>
+                  <p className="recipe-description">{selectedRecipe.description}</p>
+                  
+                  {selectedRecipe.history && (
+                    <div className="recipe-history">
+                      <h3>📚 Historia</h3>
+                      <p>{selectedRecipe.history}</p>
+                    </div>
+                  )}
+                  
+                  <div className="recipe-details">
+                    <div className="recipe-info">
+                      <span>⏱️ {selectedRecipe.cookingTime}</span>
+                      <span>👥 {selectedRecipe.servings}</span>
+                      <span>🏷️ {selectedRecipe.category}</span>
+                      {selectedRecipe.region && <span>📍 {selectedRecipe.region}</span>}
+                      <span 
+                        className="difficulty-badge"
+                        style={{ backgroundColor: getDifficultyColor(selectedRecipe.difficulty) }}
+                      >
+                        {selectedRecipe.difficulty}
+                      </span>
+                    </div>
+                  </div>
 
-              <div className="recipe-sections">
-                <div className="ingredients-section">
-                  <h3>🥕 Ingredientes</h3>
-                  <ul>
-                    {selectedRecipe.ingredients.map((ingredient, index) => (
-                      <li key={index}>{ingredient}</li>
-                    ))}
-                  </ul>
-                </div>
+                  <div className="recipe-sections">
+                    <div className="ingredients-section">
+                      <h3>🥕 Ingredientes</h3>
+                      <ul>
+                        {selectedRecipe.ingredients.map((ingredient, index) => (
+                          <li key={index}>{ingredient}</li>
+                        ))}
+                      </ul>
+                    </div>
 
-                <div className="instructions-section">
-                  <h3>📝 Instrucciones</h3>
-                  <ol>
-                    {selectedRecipe.instructions.map((instruction, index) => (
-                      <li key={index}>{instruction}</li>
-                    ))}
-                  </ol>
-                </div>
-              </div>
+                    <div className="instructions-section">
+                      <h3>📝 Instrucciones</h3>
+                      <ol>
+                        {selectedRecipe.instructions.map((instruction, index) => (
+                          <li key={index}>{instruction}</li>
+                        ))}
+                      </ol>
+                    </div>
+                  </div>
+
+                  {selectedRecipe.tips && (
+                    <div className="recipe-tips">
+                      <h3>💡 Consejos de Cocina</h3>
+                      <p>{selectedRecipe.tips}</p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         )}

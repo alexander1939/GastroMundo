@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { searchMexicanRestaurants } from '../services/api';
 import type { Restaurant } from '../services/api';
+import { useMap as useMapContext } from '../contexts/MapContext';
 
 // Fix para los iconos de Leaflet en React
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -30,6 +31,7 @@ const MapController: React.FC<{ center: [number, number] }> = ({ center }) => {
 };
 
 const Map: React.FC<MapProps> = ({ city, onRestaurantsFound }) => {
+  const { handleRestaurantClick } = useMapContext();
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -116,6 +118,20 @@ const Map: React.FC<MapProps> = ({ city, onRestaurantsFound }) => {
                 {restaurant.rating && (
                   <p>⭐ {restaurant.rating}/5</p>
                 )}
+                <button 
+                  onClick={() => handleRestaurantClick(restaurant)}
+                  style={{ 
+                    marginTop: '8px', 
+                    padding: '4px 8px', 
+                    backgroundColor: '#4CAF50', 
+                    color: 'white', 
+                    border: 'none', 
+                    borderRadius: '4px', 
+                    cursor: 'pointer' 
+                  }}
+                >
+                  Ver detalles
+                </button>
               </div>
             </Popup>
           </Marker>

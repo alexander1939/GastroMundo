@@ -83,27 +83,27 @@ const getCoordinates = async (city: string): Promise<{lat: number, lng: number, 
 const searchRestaurantsWithStrategy = async (lat: number, lng: number, strategy: 'exact' | 'broad' | 'state'): Promise<Restaurant[]> => {
   const radius = strategy === 'exact' ? 5000 : strategy === 'broad' ? 15000 : 25000;
   
-  const overpassQuery = `
-    [out:json][timeout:30];
-    (
-      node["amenity"="restaurant"](around:${radius},${lat},${lng});
-      way["amenity"="restaurant"](around:${radius},${lat},${lng});
-      relation["amenity"="restaurant"](around:${radius},${lat},${lng});
-      node["cuisine"="mexican"](around:${radius},${lat},${lng});
-      way["cuisine"="mexican"](around:${radius},${lat},${lng});
-      relation["cuisine"="mexican"](around:${radius},${lat},${lng});
+    const overpassQuery = `
+      [out:json][timeout:30];
+      (
+        node["amenity"="restaurant"](around:${radius},${lat},${lng});
+        way["amenity"="restaurant"](around:${radius},${lat},${lng});
+        relation["amenity"="restaurant"](around:${radius},${lat},${lng});
+        node["cuisine"="mexican"](around:${radius},${lat},${lng});
+        way["cuisine"="mexican"](around:${radius},${lat},${lng});
+        relation["cuisine"="mexican"](around:${radius},${lat},${lng});
       node["amenity"="fast_food"](around:${radius},${lat},${lng});
       way["amenity"="fast_food"](around:${radius},${lat},${lng});
       relation["amenity"="fast_food"](around:${radius},${lat},${lng});
       node["amenity"="food_court"](around:${radius},${lat},${lng});
       way["amenity"="food_court"](around:${radius},${lat},${lng});
       relation["amenity"="food_court"](around:${radius},${lat},${lng});
-    );
-    out body;
-    >;
-    out skel qt;
-  `;
-  
+      );
+      out body;
+      >;
+      out skel qt;
+    `;
+    
   try {
     const overpassResponse = await fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
@@ -172,36 +172,36 @@ export const searchMexicanRestaurants = async (city: string): Promise<Restaurant
     throw error;
   }
 };
-
+    
 // Función para filtrar restaurantes mexicanos
 const filterMexicanRestaurants = (elements: any[]): Restaurant[] => {
-  const mexicanRestaurants: Restaurant[] = [];
-  const processedIds = new Set();
-  
+    const mexicanRestaurants: Restaurant[] = [];
+    const processedIds = new Set();
+    
   for (const element of elements) {
-    if (element.type === 'node' && element.tags && !processedIds.has(element.id)) {
-      processedIds.add(element.id);
-      
-      const name = element.tags.name?.toLowerCase() || '';
-      const cuisine = element.tags.cuisine?.toLowerCase() || '';
-      const tags = Object.values(element.tags).join(' ').toLowerCase();
-      
+      if (element.type === 'node' && element.tags && !processedIds.has(element.id)) {
+        processedIds.add(element.id);
+        
+        const name = element.tags.name?.toLowerCase() || '';
+        const cuisine = element.tags.cuisine?.toLowerCase() || '';
+        const tags = Object.values(element.tags).join(' ').toLowerCase();
+        
       // Criterios ampliados para restaurantes mexicanos
-      const isMexican = 
-        name.includes('mexicano') || 
-        name.includes('mexican') || 
-        name.includes('taco') ||
-        name.includes('burrito') ||
-        name.includes('enchilada') ||
-        name.includes('quesadilla') ||
-        name.includes('tamal') ||
-        name.includes('pozole') ||
-        name.includes('mole') ||
-        name.includes('guacamole') ||
-        name.includes('salsa') ||
-        name.includes('chile') ||
-        name.includes('frijol') ||
-        name.includes('maiz') ||
+        const isMexican = 
+          name.includes('mexicano') || 
+          name.includes('mexican') || 
+          name.includes('taco') ||
+          name.includes('burrito') ||
+          name.includes('enchilada') ||
+          name.includes('quesadilla') ||
+          name.includes('tamal') ||
+          name.includes('pozole') ||
+          name.includes('mole') ||
+          name.includes('guacamole') ||
+          name.includes('salsa') ||
+          name.includes('chile') ||
+          name.includes('frijol') ||
+          name.includes('maiz') ||
         name.includes('tortilla') ||
         name.includes('carnitas') ||
         name.includes('barbacoa') ||
@@ -228,32 +228,32 @@ const filterMexicanRestaurants = (elements: any[]): Restaurant[] => {
         name.includes('pollo') ||
         name.includes('pescado') ||
         name.includes('mariscos') ||
-        cuisine.includes('mexican') ||
-        tags.includes('mexican') ||
-        tags.includes('taco') ||
-        tags.includes('mexican_restaurant') ||
-        element.tags.cuisine === 'mexican';
-      
-      if (isMexican) {
-        console.log('✅ Restaurante mexicano encontrado:', element.tags.name);
-        mexicanRestaurants.push({
-          id: element.id.toString(),
-          name: element.tags.name || 'Restaurante Mexicano',
-          address: element.tags['addr:street'] || element.tags['addr:city'] || 'Dirección no disponible',
+          cuisine.includes('mexican') ||
+          tags.includes('mexican') ||
+          tags.includes('taco') ||
+          tags.includes('mexican_restaurant') ||
+          element.tags.cuisine === 'mexican';
+        
+        if (isMexican) {
+          console.log('✅ Restaurante mexicano encontrado:', element.tags.name);
+          mexicanRestaurants.push({
+            id: element.id.toString(),
+            name: element.tags.name || 'Restaurante Mexicano',
+            address: element.tags['addr:street'] || element.tags['addr:city'] || 'Dirección no disponible',
           rating: undefined,
-          types: Object.keys(element.tags),
-          geometry: {
-            location: {
-              lat: element.lat,
-              lng: element.lon
+            types: Object.keys(element.tags),
+            geometry: {
+              location: {
+                lat: element.lat,
+                lng: element.lon
+              }
             }
-          }
-        });
+          });
+        }
       }
     }
-  }
-  
-  return mexicanRestaurants;
+    
+    return mexicanRestaurants;
 };
 
 // Función para filtrar restaurantes generales cuando no hay mexicanos específicos
@@ -281,7 +281,7 @@ const filterGeneralRestaurants = (elements: any[]): Restaurant[] => {
             }
           }
         });
-      }
+  }
     }
   }
   
