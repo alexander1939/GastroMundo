@@ -131,8 +131,7 @@ const RecipesTab: React.FC = () => {
       {loading && (
         <div className="loading-container">
           <div className="loading">
-            <div className="spinner"></div>
-            <p>🤖 Generando recetas con IA...</p>
+          
           </div>
         </div>
       )}

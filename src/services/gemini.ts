@@ -232,17 +232,20 @@ export const getRecipeCards = async (query: string, offset: number = 0): Promise
       4. Cada receta DEBE tener "${query}" en su nombre
       5. NO hay excepciones. SOLO "${query}".
       
-      Ejemplos de lo que SÍ debes generar:
+      FORMATO DE NOMBRES:
       - Para "tamales": "Tamales de Chiapas", "Tamales Oaxaqueños", "Tamales de Dulce"
       - Para "tacos": "Tacos al Pastor", "Tacos de Carnitas", "Tacos de Pescado"
       - Para "mole": "Mole Poblano", "Mole Negro", "Mole Verde"
+      - Para "bebidas": "Tepache Fermentado", "Horchata", "Agua de Jamaica"
+      
+      IMPORTANTE: Los nombres deben ser SIMPLES y DIRECTOS. NO agregues "mexicanos tradicionales específicos" ni texto extra.
       
       Ejemplos de lo que NO debes generar:
       - Para "tamales": NO sopes, NO tlacoyos, NO enchiladas
       - Para "tacos": NO pozole, NO mole, NO tamales
       
       Genera 12 recetas diferentes en formato JSON. Cada receta debe incluir SOLO:
-      - name: Nombre del platillo (OBLIGATORIO: debe contener "${query}")
+      - name: Nombre del platillo (OBLIGATORIO: debe contener "${query}" pero ser simple)
       - description: Descripción breve del platillo (máximo 2 líneas)
       - cookingTime: Tiempo aproximado de preparación
       - difficulty: Nivel de dificultad (Fácil, Intermedio, Difícil)
@@ -293,6 +296,34 @@ export const getRecipeCards = async (query: string, offset: number = 0): Promise
 
     const cardsData: GeminiCardResponse[] = JSON.parse(jsonMatch[0]);
     
+    // Función para limpiar nombres largos
+    const cleanRecipeName = (name: string, query: string): string => {
+      // Si el nombre contiene "mexicanos tradicionales específicos", limpiarlo
+      if (name.includes('mexicanos tradicionales específicos')) {
+        // Extraer solo la parte relevante
+        const cleanName = name.replace(/\s*:\s*.*?mexicanos tradicionales específicos.*?$/i, '');
+        return cleanName.trim();
+      }
+      
+      // Si el nombre es muy largo, intentar simplificarlo
+      if (name.length > 50) {
+        // Buscar el patrón "Query de/al/para Algo"
+        const queryLower = query.toLowerCase();
+        const nameLower = name.toLowerCase();
+        
+        if (nameLower.includes(queryLower)) {
+          // Extraer desde el inicio hasta después del query
+          const startIndex = nameLower.indexOf(queryLower);
+          const endIndex = name.indexOf(':', startIndex);
+          if (endIndex > startIndex) {
+            return name.substring(0, endIndex).trim();
+          }
+        }
+      }
+      
+      return name;
+    };
+
     // Convertir a formato RecipeCard con offset para IDs únicos
     const recipeCards: RecipeCard[] = cardsData.map((card, index) => ({
       id: `card-${Date.now()}-${offset + index}`,
@@ -322,12 +353,12 @@ export const getRecipeCards = async (query: string, offset: number = 0): Promise
         
         REGLA ÚNICA: Cada receta DEBE tener "${query}" en su nombre.
         
-        Si buscan "tamales", SOLO genera:
-        - Tamales de Chiapas
-        - Tamales Oaxaqueños  
-        - Tamales de Dulce
-        - Tamales de Rajas
-        - etc.
+        FORMATO DE NOMBRES SIMPLES:
+        - Para "tamales": "Tamales de Chiapas", "Tamales Oaxaqueños", "Tamales de Dulce"
+        - Para "tacos": "Tacos al Pastor", "Tacos de Carnitas", "Tacos de Pescado"
+        - Para "bebidas": "Tepache Fermentado", "Horchata", "Agua de Jamaica"
+        
+        IMPORTANTE: Nombres SIMPLES. NO agregues "mexicanos tradicionales específicos".
         
         NO generes sopes, tlacoyos, enchiladas, ni nada más.
         
@@ -359,7 +390,7 @@ export const getRecipeCards = async (query: string, offset: number = 0): Promise
         if (aggressiveJsonMatch) {
           const aggressiveCardsData: GeminiCardResponse[] = JSON.parse(aggressiveJsonMatch[0]);
           const aggressiveRecipeCards: RecipeCard[] = aggressiveCardsData.map((card, index) => ({
-            id: `card-aggressive-${Date.now()}-${offset + index}`,
+            id: `card-aggressive-${offset + index}`,
             name: card.name,
             description: card.description,
             cookingTime: card.cookingTime,
@@ -387,14 +418,11 @@ export const getRecipeCards = async (query: string, offset: number = 0): Promise
 
 // Función para cargar más recetas (para infinite scroll)
 export const loadMoreRecipes = async (query: string, currentCount: number): Promise<RecipeCard[]> => {
-  // El query ya viene limpio del contexto, solo agregar los modificadores
-  const enhancedQuery = `${query} mexicanos tradicionales específicos`;
-  
+  // El query ya viene limpio del contexto, usarlo directamente
   console.log('🔄 Cargando más recetas para:', query, 'offset:', currentCount);
-  console.log('🔍 Query mejorada:', enhancedQuery);
   
   // Agregar contexto adicional al prompt para mantener especificidad
-  const result = await getRecipeCards(enhancedQuery, currentCount);
+  const result = await getRecipeCards(query, currentCount);
   
   // Validación adicional: verificar que al menos el 80% de las recetas sean específicas
   const specificRecipes = result.filter(recipe => {
@@ -409,7 +437,7 @@ export const loadMoreRecipes = async (query: string, currentCount: number): Prom
   // Si menos del 80% son específicas, intentar de nuevo con un prompt más específico
   if (specificRecipes.length < result.length * 0.8) {
     console.log('⚠️ Demasiadas recetas no específicas, regenerando...');
-    return await getRecipeCards(`${query} mexicanos tradicionales específicos - SOLO ${query}`, currentCount);
+    return await getRecipeCards(`${query} - SOLO ${query}`, currentCount);
   }
   
   return result;
@@ -507,27 +535,26 @@ export const getRecipeDetails = async (recipeName: string, category: string): Pr
 // Función para buscar recetas por categoría (ahora devuelve tarjetas)
 export const searchRecipesByCategory = async (category: string): Promise<RecipeCard[]> => {
   const categories = {
-    'chiapas': 'recetas tradicionales específicas de Chiapas',
-    'oaxaca': 'recetas tradicionales específicas de Oaxaca',
-    'puebla': 'recetas tradicionales específicas de Puebla',
-    'yucatan': 'recetas tradicionales específicas de Yucatán',
-    'antojitos': 'antojitos mexicanos tradicionales específicos',
-    'sopas': 'sopas y caldos mexicanos tradicionales específicos',
-    'postres': 'postres mexicanos tradicionales específicos',
-    'bebidas': 'bebidas mexicanas tradicionales específicas',
-    'tamales': 'tamales mexicanos tradicionales específicos',
-    'mole': 'recetas de mole mexicano específicas',
-    'pozole': 'recetas de pozole mexicano específicas',
-    'tacos': 'tacos mexicanos tradicionales específicos'
+    'chiapas': 'recetas de Chiapas',
+    'oaxaca': 'recetas de Oaxaca',
+    'puebla': 'recetas de Puebla',
+    'yucatan': 'recetas de Yucatán',
+    'antojitos': 'antojitos',
+    'sopas': 'sopas',
+    'postres': 'postres',
+    'bebidas': 'bebidas',
+    'tamales': 'tamales',
+    'mole': 'mole',
+    'pozole': 'pozole',
+    'tacos': 'tacos'
   };
 
-  const query = categories[category as keyof typeof categories] || `${category} mexicanos tradicionales específicos`;
+  const query = categories[category as keyof typeof categories] || category;
   return getRecipeCards(query);
 };
 
 // Función para búsqueda libre de recetas (ahora devuelve tarjetas)
 export const searchRecipesByQuery = async (query: string): Promise<RecipeCard[]> => {
-  // Mejorar la query para que sea más específica
-  const enhancedQuery = `${query} mexicanos tradicionales específicos`;
-  return getRecipeCards(enhancedQuery);
+  // Usar la query directamente sin modificadores
+  return getRecipeCards(query);
 }; 
