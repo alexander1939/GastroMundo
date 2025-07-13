@@ -52,7 +52,7 @@ Primero, inicia el servidor proxy que maneja las peticiones a las APIs externas:
 
 ```bash
 # Desde la raíz del proyecto
-npx ts-node backend\holiday-proxy.js
+node backend/holiday-proxy.js
 ```
 
 Deberías ver:
