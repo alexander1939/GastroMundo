@@ -196,16 +196,16 @@ const EventsTab = () => {
         <div className="filters-section">
           <div className="filter-group">
             <label className="filter-label">Tipo:</label>
-            <div className="type-filter">
+      <div className="type-filter">
               {types.map((type) => (
-                <button
-                  key={type}
+          <button
+            key={type}
                   className={`type-button ${filterType === type ? 'active' : ''}`}
                   onClick={() => setFilterType(type)}
-                >
-                  {type}
-                </button>
-              ))}
+          >
+            {type}
+          </button>
+        ))}
             </div>
           </div>
 
@@ -245,11 +245,11 @@ const EventsTab = () => {
         {/* Resultados */}
         <div className="results-info">
           <p>Mostrando {filteredHolidays.length} de {holidays.length} festividades</p>
-        </div>
+      </div>
 
         <div className="events-grid">
           {filteredHolidays.map((holiday) => (
-            <div
+            <div 
               key={holiday.uuid}
               className="event-card"
               onClick={() => setSelectedHoliday(holiday)}
@@ -257,12 +257,12 @@ const EventsTab = () => {
               <div className="event-header">
                 <h3>{holiday.name}</h3>
                 {holiday.type && (
-                  <span
-                    className="type-badge"
+                <span 
+                  className="type-badge"
                     style={{ backgroundColor: getTypeColor(holiday.type) }}
-                  >
+                >
                     {holiday.type}
-                  </span>
+                </span>
                 )}
               </div>
               
@@ -310,25 +310,25 @@ const EventsTab = () => {
 
               <div className="event-sections">
                 {selectedHoliday.details && selectedHoliday.details.length > 0 && (
-                  <div className="details-section">
-                    <h3>📋 Detalles del Evento</h3>
-                    <ul>
+                <div className="details-section">
+                  <h3>📋 Detalles del Evento</h3>
+                  <ul>
                       {selectedHoliday.details.map((detail, index) => (
-                        <li key={index}>{detail}</li>
-                      ))}
-                    </ul>
-                  </div>
+                      <li key={index}>{detail}</li>
+                    ))}
+                  </ul>
+                </div>
                 )}
 
                 {selectedHoliday.traditions && selectedHoliday.traditions.length > 0 && (
-                  <div className="traditions-section">
-                    <h3>🎭 Tradiciones</h3>
-                    <ul>
+                <div className="traditions-section">
+                  <h3>🎭 Tradiciones</h3>
+                  <ul>
                       {selectedHoliday.traditions.map((tradition, index) => (
-                        <li key={index}>{tradition}</li>
-                      ))}
-                    </ul>
-                  </div>
+                      <li key={index}>{tradition}</li>
+                    ))}
+                  </ul>
+                </div>
                 )}
               </div>
             </div>
@@ -348,4 +348,4 @@ const EventsTab = () => {
   );
 };
 
-export default EventsTab;
+export default EventsTab; 
