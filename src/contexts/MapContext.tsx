@@ -9,7 +9,7 @@ interface MapContextType {
   selectedRestaurant: Restaurant | null;
   
   // Acciones
-  handleSearch: (city: string) => void;
+  handleSearch: (params: { estado?: string; municipio?: string; query?: string } | string) => void;
   handleRestaurantsFound: (foundRestaurants: Restaurant[]) => void;
   handleRestaurantClick: (restaurant: Restaurant) => void;
   clearSelectedRestaurant: () => void;
@@ -34,8 +34,29 @@ export const MapProvider: React.FC<MapProviderProps> = ({ children }) => {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
 
-  const handleSearch = useCallback((city: string) => {
-    setCurrentCity(city);
+  const handleSearch = useCallback((params: { estado?: string; municipio?: string; query?: string } | string) => {
+    let searchString = '';
+    if (typeof params === 'string') {
+      searchString = params;
+    } else {
+      if (params.municipio && params.estado) {
+        searchString = `${params.municipio}, ${params.estado}`;
+      } else if (params.estado) {
+        searchString = params.estado;
+      }
+      if (params.query) {
+        // Si hay municipio/estado, agregar el query al final
+        if (searchString) {
+          searchString = `${params.query}, ${searchString}`;
+        } else {
+          searchString = params.query;
+        }
+      }
+      if (!searchString) {
+        searchString = 'Ciudad de México';
+      }
+    }
+    setCurrentCity(searchString);
     setSelectedRestaurant(null);
   }, []);
 
