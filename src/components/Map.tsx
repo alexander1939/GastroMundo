@@ -85,14 +85,27 @@ const Map: React.FC<MapProps> = ({ city, onRestaurantsFound }) => {
   }, [city]);
 
   return (
-    <div className="map-container">
+    <div className="map-container" style={{
+      border: '4px solid #764ba2',
+      borderRadius: '24px',
+      boxShadow: '0 8px 32px rgba(118,75,162,0.15)',
+      padding: '12px',
+      background: 'white',
+      maxWidth: '2300px',
+      margin: '0 auto',
+      minHeight: '820px',
+      height: '60vh',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+    }}>
       {loading && <div className="loading">Buscando restaurantes mexicanos...</div>}
       {error && <div className="error">{error}</div>}
       
       <MapContainer 
         center={mapCenter} 
         zoom={13} 
-        style={{ height: '100%', width: '100%' }}
+        style={{ height: '100%', width: '100%', borderRadius: '18px', minHeight: '800px' }}
         key={city}
       >
         <MapController center={mapCenter} />
